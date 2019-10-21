@@ -2,11 +2,11 @@ App = {
   web3Provider: null,
   contracts: {},
 
-  init: async function() {
+  init: async () => {
     // // Load pets.
     // $.getJSON('../pets.json', function(data) {
-    //   var petsRow = $('#petsRow');
-    //   var petTemplate = $('#petTemplate');
+    //   let petsRow = $('#petsRow');
+    //   let petTemplate = $('#petTemplate');
 
     //   for (i = 0; i < data.length; i ++) {
     //     petTemplate.find('.panel-title').text(data[i].name);
@@ -23,7 +23,7 @@ App = {
     return App.initWeb3();
   },
 
-  initWeb3: async function() {
+  initWeb3: async () => {
     if (typeof web3 !== "undefined"){
       // If a web3 instance is already provided by Meta Mask
       App.web3Provider = web3.currentProvider;
@@ -36,8 +36,8 @@ App = {
     return App.initContract();
   },
 
-  initContract: function() {
-    $.getJSON("Election.json", function(election) {
+  initContract: () => {
+    $.getJSON("Election.json", (election) => {
       // Instance a new truffle contract from the artifact
       App.contracts.Election = TruffleContract(election);
       // Connect provider to interact with contract
@@ -49,9 +49,22 @@ App = {
     });
   },
 
+  listenForEvents: () => {
+    App.contracts.Election.deployed().then((instance) => {
+      instance.votedEvent({}, {
+        fromBlock: 0,
+        toBlock: 'latest'
+      }).watch((error, event) => {
+        console.log("event triggered", event)
+        // Reload when a new vote is recorded
+        App.getAccount();
+      });
+    });
+  },
+
   getAccount: () => {
     // Load account data
-    web3.eth.getCoinbase(function(err, account) { 
+    web3.eth.getCoinbase((err, account) => { 
       if (err === null) {
         App.account = account;
         $("#accountAddress").html("Your Account: " + account);
@@ -60,53 +73,37 @@ App = {
     });
   },
 
-  listenForEvents: function() {
-    App.contracts.Election.deployed().then(function(instance) {
-      instance.votedEvent({}, {
-        fromBlock: 0,
-        toBlock: 'latest'
-      }).watch(function(error, event) {
-        console.log("event triggered", event)
-        // Reload when a new vote is recorded
-        App.render();
-      });
-    });
-  },
-
-  render: function() {
-    var electionInstance;
-    var loader = $("#loader");
-    var content = $("#content");
+  render: () => {
+    let electionInstance;
+    let loader = $("#loader");
+    let content = $("#content");
   
     loader.show();
     content.hide();
 
-    console.log(App);
-    console.log(App.account);
-
     // Load contract data
-    App.contracts.Election.deployed().then(function(instance) {
+    App.contracts.Election.deployed().then((instance) => {
       electionInstance = instance;
       return electionInstance.candidatesCount();
-    }).then(function(candidatesCount) {
-      var candidatesResults = $("#candidatesResults");
+    }).then((candidatesCount) => {
+      let candidatesResults = $("#candidatesResults");
       candidatesResults.empty();
   
-      var candidatesSelect = $('#candidatesSelect');
+      let candidatesSelect = $('#candidatesSelect');
       candidatesSelect.empty();
   
-      for (var i = 1; i <= candidatesCount; i++) {
-        electionInstance.candidates(i).then(function(candidate) {
-          var id = candidate[0];
-          var name = candidate[1];
-          var voteCount = candidate[2];
+      for (let i = 1; i <= candidatesCount; i++) {
+        electionInstance.candidates(i).then((candidate) => {
+          let id = candidate[0];
+          let name = candidate[1];
+          let voteCount = candidate[2];
   
           // Render candidate Result
-          var candidateTemplate = "<tr><th>" + id + "</th><td>" + name + "</td><td>" + voteCount + "</td></tr>"
+          let candidateTemplate = "<tr><th>" + id + "</th><td>" + name + "</td><td>" + voteCount + "</td></tr>"
           candidatesResults.append(candidateTemplate);
   
           // Render candidate ballot option
-          var candidateOption = "<option value='" + id + "' >" + name + "</ option>"
+          let candidateOption = "<option value='" + id + "' >" + name + "</ option>"
           candidatesSelect.append(candidateOption);
         });
       }
@@ -118,20 +115,20 @@ App = {
       }
       loader.hide();
       content.show();
-    }).catch(function(error) {
+    }).catch((error) => {
       console.warn(error);
     });
   },
 
-  castVote: function() {
-    var candidateId = $('#candidatesSelect').val();
-    App.contracts.Election.deployed().then(function(instance) {
+  castVote: () => {
+    let candidateId = $('#candidatesSelect').val();
+    App.contracts.Election.deployed().then((instance) => {
       return instance.vote(candidateId, { from: App.account });
-    }).then(function(result) {
+    }).then((result) => {
       // Wait for votes to update
       $("#content").hide();
       $("#loader").show();
-    }).catch(function(err) {
+    }).catch((err) => {
       console.error(err);
     });
   }
@@ -139,8 +136,8 @@ App = {
 
 
 
-$(function() {
-  $(window).load(function() {
+$(() => {
+  $(window).load(() => {
     App.init();
   });
 });
