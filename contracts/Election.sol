@@ -1,4 +1,4 @@
- pragma solidity 0.5.8;
+ pragma solidity 0.5.11;
 
 contract Election {
     // Model a candidate
@@ -24,6 +24,11 @@ contract Election {
         addCandidate("Candidate 2");
     }
 
+    // Define event
+    event votedEvent (
+        uint indexed _candidateId
+    );
+
     function addCandidate(string memory _name) private {
         candidatesCount ++;
         candidates[candidatesCount] = Candidate(candidatesCount, _name, 0);
@@ -39,5 +44,7 @@ contract Election {
         votersCount ++;
         // update candidate vote Count
         candidates[_candidateId].voteCount ++;
+        // trigger voted event
+        emit votedEvent(_candidateId);
     }
 }

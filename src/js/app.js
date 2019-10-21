@@ -43,10 +43,12 @@ App = {
       // Connect provider to interact with contract
       App.contracts.Election.setProvider(App.web3Provider);
       
+      App.listenForEvents();
+
       return App.getAccount();
     });
   },
-  
+
   getAccount: () => {
     // Load account data
     web3.eth.getCoinbase(function(err, account) { 
@@ -55,6 +57,19 @@ App = {
         $("#accountAddress").html("Your Account: " + account);
         return App.render();
       }
+    });
+  },
+
+  listenForEvents: function() {
+    App.contracts.Election.deployed().then(function(instance) {
+      instance.votedEvent({}, {
+        fromBlock: 0,
+        toBlock: 'latest'
+      }).watch(function(error, event) {
+        console.log("event triggered", event)
+        // Reload when a new vote is recorded
+        App.render();
+      });
     });
   },
 
